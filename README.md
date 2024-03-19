@@ -67,6 +67,4 @@ point and the obstacle avoidance algorithm. These parameters include:
 ![image](img/Figure_2.png)
 3. `2-obstacle-sin.py`:
 ![image](img/Figure_3.png)
-#   S u Y o n g B i n 8 - R e a l - t i m e - T r a j e c t o r y - S m o o t h i n g - a n d - O b s t a c l e - A v o i d a n c e - w i t h - V i r t u a l - F o r c e - G u i d a n c e 
- 
- 
+
