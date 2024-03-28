@@ -67,3 +67,6 @@ point and the obstacle avoidance algorithm. These parameters include:
 ![image](img/Figure_2.png)
 3. `2-obstacle-sin.py`:
 ![image](img/Figure_3.png)
+
+## Additional Instructions
+Furthermore, the files beginning with 'example' are sets of comparative experiments. Please refer to the descriptions in the relevant papers for more details.
