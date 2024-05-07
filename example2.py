@@ -3,20 +3,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-
 from basic import calculate_mov_direction_total, calculate_mov_direction, compute_curvature, frechet_distance, RRT,bezier_curve
 
 #设置部分参数
 # Set initial parameters
 kre = 1
 kat1 = 1
-kat2 = 0.1
-kat3 = 0.1
-kre1 = 0.1
+kat2 = 0.5 #0.1
+kat3 = 0
+kre1 = 0.01 #0.1
 kre2 = 0.01
-kre3 = 0.01
-step_max = 0.11
-disErr = 0.2
+kre3 = 0
+step_max = 0.15 #0.11
+disErr = 1  #0.2
 
 # 创建一个新的图形
 figsize=(10, 8)
@@ -32,7 +31,7 @@ plt.ylabel('Y', fontsize=14, weight='bold')  # 设置Y轴标签
 # 在0到10之间生成等间隔的200个点
 # Generate trajectory
 # Generate 200 evenly spaced points between 0 and 10
-x = np.linspace(0, 10, 50)
+x = np.linspace(0, 10, 30)
 y = np.full_like(x, 5)
 
 # 将x和y合并为一个二维数组 # Merge x and y into a 2D array
@@ -111,7 +110,7 @@ while np.linalg.norm(obj_point - goal) > 0.1:
     elif i > Traj.shape[0] - 2:  # The last three points only provide attraction force
         delta = calculate_mov_direction(b3, b2, b1, obj_point, f1, f2, f3, kat1, 0, 0, 0, 0, 0)
     else:  # Normal calculation for intermediate points
-        delta = calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre)
+        delta = calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre,1.1)
 
     # 计算下一个原始轨迹点的位置
     #Calculate the position of the next original trajectory point.
@@ -127,7 +126,7 @@ while np.linalg.norm(obj_point - goal) > 0.1:
     follow.append(obj_point)
     # 更新位置并记录轨迹 # Update position and record trajectory
     position = np.array(next_position)
-    trajectory.append(position)
+
 
     #设置吸引子的移动速度 Setting the moving speed of the attractor.
     for obstacle in obstacles:
@@ -139,27 +138,30 @@ while np.linalg.norm(obj_point - goal) > 0.1:
         if np.linalg.norm(position - obstacle_point) > p_obstacle:
             if np.linalg.norm(obj_point - position) < disErr:
                 i = i + 1
+                trajectory.append(position)
             else:
-                if count % 4 == 0:
+                if count % 3 == 0:#4
                     i = i + 1
+                    trajectory.append(position)
         else:#更加精细地调节速度，会取得更好的结果，可以进行多次尝试
             ## Fine-tuning the speed more precisely will yield better results. Multiple attempts can be made for optimization.
             pos_obj = np.linalg.norm(obstacle_point - position)
-            if pos_obj <= pos_obj_last and pos_obj >= r_obstacle:# 离障碍物越来越近,速度加快 # Speed increases as the obstacle gets closer
+            ky = 0.01
+            if pos_obj <= pos_obj_last and pos_obj >= r_obstacle+ky:# 离障碍物越来越近,速度加快 # Speed increases as the obstacle gets closer
                 i = i + 2
-                print(1)
-            elif pos_obj <= pos_obj_last and pos_obj < r_obstacle:
-                if count % 5 == 0:
+                trajectory.append(position)
+            elif pos_obj <= pos_obj_last and pos_obj < r_obstacle+ky:
+                if count % 6 == 0:#5
                     i = i + 1
-                    print(2)
-            elif pos_obj > pos_obj_last and pos_obj < r_obstacle:
-                if count % 3 == 0:
-                    i = i + 2
-                    print(3)
-            elif pos_obj > pos_obj_last and pos_obj >= r_obstacle:
+                    trajectory.append(position)
+            elif pos_obj > pos_obj_last and pos_obj < r_obstacle+ky:
+                if count % 2 == 0:#3
+                    i = i + 1#2
+                    trajectory.append(position)
+            elif pos_obj > pos_obj_last and pos_obj >= r_obstacle+ky:
                 if count % 1 == 0:
                     i = i + 1
-                    print(4)
+                    trajectory.append(position)
                     kre=0
             pos_obj_last = pos_obj
             break;
@@ -186,8 +188,8 @@ while np.linalg.norm(obj_point - goal) > 0.1:
     plt.pause(0.1)
 
     if count == 0:
-        plt.scatter(3, 5, color='green', marker='o', label='Start')
-        plt.scatter(7, 5, color='blue', marker='o', label='Goal')
+        plt.scatter(3, 5, color='blue', marker='o', label='Start')
+        plt.scatter(7, 5, color='red', marker='o', label='Goal')
 
         plt.legend(loc='upper center', ncol=2, fontsize=14)
     count =count +1
@@ -208,10 +210,28 @@ rrt.plan()
 # 查找路径
 path = rrt.find_path()
 
+# 假设 path 是包含坐标点的列表，每个坐标点有 x 和 y 两个维度
+# 将 path 拆分成 x 和 y 坐标的列表
+x_coords = [point[0] for point in path]
+y_coords = [point[1] for point in path]
+
+# 创建 x 和 y 坐标的插值函数
+f_x = interp1d(np.arange(len(x_coords)), x_coords, kind='linear')
+f_y = interp1d(np.arange(len(y_coords)), y_coords, kind='linear')
+
+# 在新长度范围内进行插值
+new_length = len(x_coords) * 5
+new_indices = np.linspace(0, len(x_coords) - 1, new_length)
+new_x_coords = f_x(new_indices)
+new_y_coords = f_y(new_indices)
+
+# 将新的坐标点组合成新的路径
+path = [(new_x_coords[i], new_y_coords[i]) for i in range(len(new_x_coords))]
+
 # 生成均匀采样的点
 start_point = (0, 5)
 end_point = (3, 5)
-num_points = 25
+num_points = 15
 x_values = np.linspace(start_point[0], end_point[0], num_points)
 y_values = np.linspace(start_point[1], end_point[1], num_points)
 # 创建包含采样点的数组
@@ -222,7 +242,7 @@ sampled_points = np.vstack(( sampled_points,path))
 # 生成均匀采样的点
 start_point = (7, 5)
 end_point = (10, 5)
-num_points = 25
+num_points = 15
 x_values = np.linspace(start_point[0], end_point[0], num_points)
 y_values = np.linspace(start_point[1], end_point[1], num_points)
 # 创建包含采样点的数组
@@ -233,6 +253,8 @@ sampled_points_array = np.array(sampled_points)
 
 # 平滑路径
 smoothed_path = bezier_curve(sampled_points_array)
+smoothed_path= np.array(smoothed_path)
+print(len(smoothed_path))
 # 绘制结果
 figsize=(10, 8)
 plt.plot(0, 5, 'bo', markersize=10)
@@ -250,8 +272,8 @@ for node in rrt.nodes:
 plt.plot([node[0] for node in path], [node[1] for node in path], 'r-', lw=2, markersize=3, label='RRT Path')
 plt.plot([node[0] for node in smoothed_path], [node[1] for node in smoothed_path], 'b-', lw=2, markersize=3, label='Smoothed Path')
 
-plt.scatter(3, 5, color='green', marker='o', label='Start')
-plt.scatter(7, 5, color='blue', marker='o', label='Goal')
+plt.scatter(3, 5, color='blue', marker='o', label='Start')
+plt.scatter(7, 5, color='red', marker='o', label='Goal')
 
 plt.legend(loc='upper center', ncol=2,fontsize=14)
 
@@ -276,24 +298,24 @@ plt.show()
 
 ############################################################################################################################################################
 # 确定统一的数组长度
-desired_length = 100
-
-# 确保 trajectory1 和 follow1 的长度相同
-if len(trajectory1) != len(follow1) or len(trajectory1) != len(sampled_points_array) or len(follow1) != len(sampled_points_array):
-    # 创建插值函数
-    f_trajectory1 = interp1d(np.arange(len(trajectory1)), trajectory1, axis=0)
-    f_follow1 = interp1d(np.arange(len(follow1)), follow1, axis=0)
-    f_sampled_points_array = interp1d(np.arange(len(sampled_points_array)), sampled_points_array, axis=0)
-
-    # 在新长度范围内进行插值
-    trajectory1_interp = f_trajectory1(np.linspace(0, len(trajectory1) - 1, desired_length))
-    follow1_interp = f_follow1(np.linspace(0, len(follow1) - 1, desired_length))
-    sampled_points_array_interp = f_sampled_points_array(np.linspace(0, len(sampled_points_array) - 1, desired_length))
-
-    # 更新 trajectory1, follow1 和 sampled_points_array
-    trajectory1 = trajectory1_interp
-    follow1 = follow1_interp
-    sampled_points_array = sampled_points_array_interp
+# desired_length = 100
+#
+# # 确保 trajectory1 和 follow1 的长度相同
+# if len(trajectory1) != len(follow1) or len(trajectory1) != len(sampled_points_array) or len(follow1) != len(sampled_points_array):
+#     # 创建插值函数
+#     f_trajectory1 = interp1d(np.arange(len(trajectory1)), trajectory1, axis=0)
+#     f_follow1 = interp1d(np.arange(len(follow1)), follow1, axis=0)
+#     f_sampled_points_array = interp1d(np.arange(len(sampled_points_array)), sampled_points_array, axis=0)
+#
+#     # 在新长度范围内进行插值
+#     trajectory1_interp = f_trajectory1(np.linspace(0, len(trajectory1) - 1, desired_length))
+#     follow1_interp = f_follow1(np.linspace(0, len(follow1) - 1, desired_length))
+#     sampled_points_array_interp = f_sampled_points_array(np.linspace(0, len(sampled_points_array) - 1, desired_length))
+#
+#     # 更新 trajectory1, follow1 和 sampled_points_array
+#     trajectory1 = trajectory1_interp
+#     follow1 = follow1_interp
+#     sampled_points_array = sampled_points_array_interp
 
 
 # 计算原始轨迹的曲率
@@ -319,6 +341,7 @@ for i in range(len(follow1) - 2):
 curvature_smoothed = np.array(curvature_smoothed)
 
 curvature_rrt = []
+
 for i in range(len(sampled_points_array) - 2):
     x = sampled_points_array[i:i+3, 0]
     y = sampled_points_array[i:i+3, 1]
@@ -328,6 +351,15 @@ for i in range(len(sampled_points_array) - 2):
 # 将结果转换为数组
 curvature_rrt = np.array(curvature_rrt)
 
+curvature_rrt_bezier = []
+for i in range(len(smoothed_path) - 2):
+    x = smoothed_path[i:i+3, 0]
+    y = smoothed_path[i:i+3, 1]
+    kappa= compute_curvature(x, y)
+    curvature_rrt_bezier.append(kappa)
+
+# 将结果转换为数组
+curvature_rrt_bezier = np.array(curvature_rrt_bezier)
 
 # 找到不是NaN的索引
 valid_indices = ~np.isnan(curvature_smoothed)
@@ -340,11 +372,11 @@ max_value = np.max(curvature_smoothed_without_nan)
 
 
 # 在最大值处画一条垂直于x轴的直线
-plt.axhline(y=max_value, color='b', linestyle='--')
-plt.text(20, max_value, f'Max: {max_value:.2f}', ha='right', va='bottom', color='b', fontsize=14)
+# plt.axhline(y=max_value, color='b', linestyle='--')
+# plt.text(20, max_value, f'Max: {max_value:.2f}', ha='right', va='bottom', color='b', fontsize=14)
 
-
-plt.plot(curvature_rrt, 'r-', label='RRT+bezier')
+plt.plot(curvature_rrt, 'k-', label='RRT')
+plt.plot(curvature_rrt_bezier, 'r-', label='RRT+bezier')
 plt.plot(curvature_smoothed, 'b-', label='Ours')
 plt.legend(loc='upper left',fontsize=14)  # Add legend and specify position to upper right
 
@@ -354,7 +386,7 @@ plt.yticks(fontsize=14, weight='bold')
 plt.xlabel('Point Index', fontsize=14, weight='bold')  # 设置X轴标签
 plt.ylabel('Curvature', fontsize=14, weight='bold')  # 设置Y轴标签
 # 保存图片，并自定义分辨率为300dpi
-plt.savefig('result/experiment2/curvature.png', dpi=600)
+plt.savefig('result/experiment2/curvature.png', dpi=300)
 plt.show()
 
 
@@ -368,8 +400,13 @@ np.savetxt('result/experiment2/curvature_smoothed.csv', curvature_smoothed, deli
 # 将平滑路径数据写入CSV文件
 np.savetxt('result/experiment2/curvature_rrt.csv', curvature_rrt, delimiter=',', header='X,Y', comments='')
 
+# 将平滑路径数据写入CSV文件
+np.savetxt('result/experiment2/curvature_rrt_bezier.csv', curvature_rrt_bezier, delimiter=',', header='X,Y', comments='')
+
 frechet_dist = frechet_distance(trajectory1, follow1)
 print(frechet_dist)
 frechet_dist = frechet_distance(trajectory1, sampled_points_array)
+print(frechet_dist)
+frechet_dist = frechet_distance(trajectory1, smoothed_path)
 print(frechet_dist)
 

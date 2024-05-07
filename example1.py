@@ -2,18 +2,17 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 from basic import calculate_mov_direction, compute_curvature, frechet_distance
 
 # Define some parameters
 kat1 = 1
 kat2 = 0.5
-kat3 = 0.1
+kat3 = 0
 kre1 = 0.01
 kre2 = 0.01
-kre3 = 0.01
-step_max = 0.15#0.1   0.15
-disErr = 3 # 2
+kre3 = 0
+step_max = 0.15#0.12   0.15   0.18
+disErr = 1.0 # 0.5  1.0  2.0
 
 # 创建一个新的图形
 figsize=(10, 8)
@@ -32,7 +31,7 @@ plt.ylabel('Y', fontsize=14, weight='bold')  # 设置Y轴标签
 
 
 # Generate a sawtooth wave trajectory
-x = np.linspace(0, 5, 100)  # Generate 200 evenly spaced points between 0 and 10
+x = np.linspace(0, 5, 101)  # Generate 200 evenly spaced points between 0 and 10
 y = np.zeros_like(x)  # Initialize y array to all zeros
 
 # Generate the sawtooth wave
@@ -107,14 +106,16 @@ while np.linalg.norm(obj_point - goal) > 0.1:
 
     # Update position and record trajectory
     position = np.array(f1)
-    trajectory.append(position)
+
 
     # Check if within tracking range, if not, wait
     if np.linalg.norm(obj_point - position) < disErr:
         i = i + 1
+        trajectory.append(position)
     else:
-        if count % 4 == 0:
+        if count % 3 == 0:
             i = i + 1
+            trajectory.append(position)
 
 
     trajectory1 = np.array(trajectory)
@@ -136,25 +137,25 @@ while np.linalg.norm(obj_point - goal) > 0.1:
     count = count + 1
 
 # 保存图片，并自定义分辨率为300dpi
-plt.savefig('result/experiment1/trajectory.png', dpi=600)
+plt.savefig('result/experiment1/trajectory-d20.png', dpi=300)
 plt.show()
 
 # 确定统一的数组长度
-desired_length = 100
-
-# 确保 trajectory1 和 follow1 的长度相同
-if len(trajectory1) != len(follow1):
-    # 创建插值函数
-    f_trajectory1 = interp1d(np.arange(len(trajectory1)), trajectory1, axis=0)
-    f_follow1 = interp1d(np.arange(len(follow1)), follow1, axis=0)
-
-    # 在新长度范围内进行插值
-    trajectory1_interp = f_trajectory1(np.linspace(0, len(trajectory1) - 1, desired_length))
-    follow1_interp = f_follow1(np.linspace(0, len(follow1) - 1, desired_length))
-
-    # 更新 trajectory1 和 follow1
-    trajectory1 = trajectory1_interp
-    follow1 = follow1_interp
+# desired_length = 100
+#
+# # 确保 trajectory1 和 follow1 的长度相同
+# if len(trajectory1) != len(follow1):
+#     # 创建插值函数
+#     f_trajectory1 = interp1d(np.arange(len(trajectory1)), trajectory1, axis=0)
+#     f_follow1 = interp1d(np.arange(len(follow1)), follow1, axis=0)
+#
+#     # 在新长度范围内进行插值
+#     trajectory1_interp = f_trajectory1(np.linspace(0, len(trajectory1) - 1, desired_length))
+#     follow1_interp = f_follow1(np.linspace(0, len(follow1) - 1, desired_length))
+#
+#     # 更新 trajectory1 和 follow1
+#     trajectory1 = trajectory1_interp
+#     follow1 = follow1_interp
 
 # 计算原始轨迹的曲率
 # 计算曲率数组
@@ -164,7 +165,7 @@ for i in range(len(trajectory1) - 2):
     y = trajectory1[i:i+3, 1]
     kappa= compute_curvature(x, y)
     curvature_original.append(kappa)
-
+print(len(trajectory1))
 # 将结果转换为数组
 curvature_original = np.array(curvature_original)
 # 计算曲率数组
@@ -194,8 +195,8 @@ max_value = np.max(curvature_smoothed_without_nan)
 
 
 # 在最大值处画一条垂直于x轴的直线
-plt.axhline(y=max_value, color='b', linestyle='--')
-plt.text(107, max_value, f'Max: {max_value:.2f}', ha='right', va='bottom', color='b', fontsize=14)
+# plt.axhline(y=max_value, color='b', linestyle='--')
+# plt.text(107, max_value, f'Max: {max_value:.2f}', ha='right', va='bottom', color='b', fontsize=14)
 
 plt.plot(curvature_original, 'r-', label='Original trajectory curvature')
 plt.plot(curvature_smoothed, 'b-', label='Smoothed trajectory curvature')
@@ -207,11 +208,11 @@ plt.yticks(fontsize=14, weight='bold')
 plt.xlabel('Point Index', fontsize=14, weight='bold')  # 设置X轴标签
 plt.ylabel('Curvature', fontsize=14, weight='bold')  # 设置Y轴标签
 # 保存图片，并自定义分辨率为300dpi
-plt.savefig('result/experiment1/curvature-15.png', dpi=600)
+plt.savefig('result/experiment1/curvature-d20.png', dpi=300)
 plt.show()
 
 # 将跟随数据写入CSV文件
 np.savetxt('result/experiment1/curvature_original.csv', curvature_original, delimiter=',', header='X,Y', comments='')
-np.savetxt('result/experiment1/curvature_smoothed-15.csv', curvature_smoothed, delimiter=',', header='X,Y', comments='')
+np.savetxt('result/experiment1/curvature_smoothed-d20.csv', curvature_smoothed, delimiter=',', header='X,Y', comments='')
 frechet_dist = frechet_distance(trajectory1, follow1)
 print(frechet_dist)

@@ -21,7 +21,7 @@ def calculate_mov_direction(b3,b2,b1,obj_point,f1,f2,f3,kat1,kat2,kat3,kre1,kre2
     ## Combine attraction and repulsion
     return kat1 * np.array(att1) + kre1 * np.array(req1) + kat2 * np.array(att2) + kre2 * np.array(req2) + kat3 * np.array(att3) + kre3 * np.array(req3)
 
-def calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre):
+def calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre,km):
     #没有障碍物时的合力
     force_origin = np.array(calculate_mov_direction(b3,b2,b1,obj_point,f1,f2,f3,kat1,kat2,kat3,kre1,kre2,kre3))
 
@@ -44,11 +44,12 @@ def calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2,
                 att_dis = np.linalg.norm(np.array(end_point) - np.array(obj_point))  # 吸引力大小
                 # Magnitude of repulsion.
                 req_dis = np.linalg.norm(np.array(obj_point) - np.array(obstacle_point))
-                max = att_dis * 1.1
+                max = att_dis * km#实验1和2是1.1,实验2是1.8
                 # The maximum value of repulsion is how many times the attraction, to prevent sudden changes.
                 req_p = - max / p_obstacle * dis + max
                 # The appropriate magnitude of repulsion.
                 req = req_p/req_dis * (np.array(obj_point) - np.array(obstacle_point))
+
                 # The final repulsive force.
             else:
                 req = (0,0)
@@ -56,8 +57,8 @@ def calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2,
         else:
             req = (0, 0)
             # The final repulsive force.
-        req_total = req_total + np.array(req)
 
+        req_total = req_total + np.array(req)
     return force_origin + kre * np.array(req_total)
     # Combine attraction and repulsion.
 
@@ -123,7 +124,7 @@ class Node:
 
 # 定义RRT类
 class RRT:
-    def __init__(self, start, goal, obstacles, step_size=1, max_iter=1000, threshold=1.0):
+    def __init__(self, start, goal, obstacles, step_size=0.5, max_iter=1000, threshold=1.0):
         self.start = Node(start[0], start[1])
         self.goal = Node(goal[0], goal[1])
         self.obstacles = obstacles

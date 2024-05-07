@@ -106,7 +106,7 @@ while np.linalg.norm(obj_point - goal) > 0.15:
     elif i > Traj.shape[0] - 2:  # The last three points only provide attraction force
         delta = calculate_mov_direction(b3, b2, b1, obj_point, f1, f2, f3, kat1, 0, 0, 0, 0, 0)
     else:  # Normal calculation for intermediate points
-        delta = calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre)
+        delta = calculate_mov_direction_total(b3, b2, b1, obj_point, f1, f2, f3, kat1, kat2, kat3, kre1, kre2, kre3,obstacles,kre,1.1)
 
     # 计算下一个原始轨迹点的位置
     #Calculate the position of the next original trajectory point.
