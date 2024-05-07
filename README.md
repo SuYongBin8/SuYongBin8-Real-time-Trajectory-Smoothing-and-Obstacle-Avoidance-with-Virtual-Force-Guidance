@@ -58,7 +58,7 @@ point and the obstacle avoidance algorithm. These parameters include:
 2. `example2.py`:
 ![image](result/experiment2/ours.png)
 3. `example3-135.py`:
-![image](result/experiment2/ours-135.png)
+![image](result/experiment3/ours-135.png)
 3. `2-obstacle-sin.py`:
 ![image](result/img/Figure_3.png)
 
