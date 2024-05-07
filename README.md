@@ -9,18 +9,18 @@ includes four experiments:
 
 1. The first experiment demonstrates real-time smoothing of a trajectory without obstacles. This can also 
 be applied to real-time signal filtering and noise reduction. Relevant code can be found 
-in `no-obstacle-smooth.py` or 'experiment1'.
+in `no-obstacle-smooth.py` or 'experiment1.py'.
 
 2. The second experiment involves a scenario where the planned path is a straight line but passes through 
 an obstacle. The algorithm smoothly navigates around the obstacle and converges back to the original 
-path. Relevant code is in `1-obstacle-line.py` or 'example2'.
+path. Relevant code is in `1-obstacle-line.py` or 'example2.py'.
 
-3. The third experiment involves smoothing and obstacle avoidance of trajectories with corners, where the obstacle is positioned at the corner. The performance of the algorithm is evaluated for different turning angles. The algorithm smoothly navigates around the obstacle. Relevant code can be found in files 'example3-45', 'example3-90', and 'example3-135'.
+3. The third experiment involves smoothing and obstacle avoidance of trajectories with corners, where the obstacle is positioned at the corner. The performance of the algorithm is evaluated for different turning angles. The algorithm smoothly navigates around the obstacle. Relevant code can be found in files 'example3-45.py', 'example3-90.py', and 'example3-135.py'.
 
 4. The four experiment is more complex, where the planned path follows a sine curve and passes through 
 two obstacles. One obstacle does not obstruct the path but is within its influence range, while the 
 other obstacle blocks the path. The algorithm ignores the first obstacle and smoothly navigates around 
-the second one. Relevant code is in `2-obstacle-sin.py`, `example4-1` and `example4-2`.
+the second one. Relevant code is in `2-obstacle-sin.py`, `example4-1.py` and `example4-2.py`.
 
 5. The remaining file, `basic.py` , contain supporting functions for the code.
 
@@ -51,5 +51,15 @@ point and the obstacle avoidance algorithm. These parameters include:
 - `kre1`, `kre2`, `kre3`: Repulsion factors for different points along the trajectory.
 - `step_max`: Maximum step size for the moving point.
 - `disErr`: Distance threshold for considering the moving point to have reached a position.
+
+## Results Display
+1. `example1.py`:
+![image](result/experiment1/trajectory-s015.png)
+2. `example2.py`:
+![image](result/experiment2/ours.png)
+3. `example3-135.py`:
+![image](result/experiment2/ours-135.png)
+3. `2-obstacle-sin.py`:
+![image](result/img/Figure_3.png)
 
 You can refer to the corresponding paper for detailed content.
